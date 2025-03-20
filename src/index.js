@@ -1,73 +1,107 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const taskForm = document.getElementById("create-task-form");
-  const taskList = document.getElementById("tasks");
-  const sortButton = document.getElementById("sort-tasks");
-  let tasks = [];
+    const taskForm = document.getElementById("create-task-form");
+    const taskList = document.getElementById("tasks");
+    const sortButton = document.getElementById("sort-tasks");
+    let tasks = [];
 
-  taskForm.addEventListener("submit", handleFormSubmit);
-  sortButton.addEventListener("click", sortTasks);
+    taskForm.addEventListener("submit", handleFormSubmit);
+    sortButton.addEventListener("click", sortTasks);
 
-  function handleFormSubmit(event) {
-      event.preventDefault();
+    
+    fetchTasks();
 
-      const description = document.getElementById("new-task-description").value.trim();
-      const priority = document.getElementById("priority").value;
-      const user = document.getElementById("user").value;
-      const dueDate = document.getElementById("due-date").value;
+    function handleFormSubmit(event) {
+        event.preventDefault();
 
-      if (description === "") return;
+        const description = document.getElementById("new-task-description").value.trim();
+        const priority = document.getElementById("priority").value;
+        const user = document.getElementById("user").value;
+        const dueDate = document.getElementById("due-date").value;
 
-      const task = { description, priority, user, dueDate };
-      tasks.push(task);
-      renderTasks();
-      taskForm.reset();
-  }
+        if (description === "") return;
 
-  function renderTasks() {
-      taskList.innerHTML = "";
-      tasks.forEach((task, index) => {
-          const li = document.createElement("li");
-          li.innerHTML = `<strong>${task.description}</strong> - ${task.user} (Due: ${task.dueDate})`;
-          li.style.color = getPriorityColor(task.priority);
+        const task = { description, priority, user, dueDate };
+        saveTask(task);
+    }
 
-          const editBtn = createButton("Edit", () => editTask(index));
-          const deleteBtn = createButton("Delete", () => deleteTask(index));
+    function renderTasks() {
+        taskList.innerHTML = "";
+        tasks.forEach((task, index) => {
+            const li = document.createElement("li");
+            li.innerHTML = `<strong>${task.description}</strong> - ${task.user} (Due: ${task.dueDate})`;
+            li.style.color = getPriorityColor(task.priority);
 
-          li.append(editBtn, deleteBtn);
-          taskList.appendChild(li);
-      });
-  }
+            const editBtn = createButton("Edit", () => editTask(index));
+            const deleteBtn = createButton("Delete", () => deleteTask(index));
 
-  function editTask(index) {
-      const task = tasks[index];
-      document.getElementById("new-task-description").value = task.description;
-      document.getElementById("priority").value = task.priority;
-      document.getElementById("user").value = task.user;
-      document.getElementById("due-date").value = task.dueDate;
+            li.append(editBtn, deleteBtn);
+            taskList.appendChild(li);
+        });
+    }
 
-      deleteTask(index);
-  }
+    function editTask(index) {
+        const task = tasks[index];
+        document.getElementById("new-task-description").value = task.description;
+        document.getElementById("priority").value = task.priority;
+        document.getElementById("user").value = task.user;
+        document.getElementById("due-date").value = task.dueDate;
 
-  function deleteTask(index) {
-      tasks.splice(index, 1);
-      renderTasks();
-  }
+        deleteTask(index);
+    }
 
-  function sortTasks() {
-      const priorityOrder = { "high": 1, "medium": 2, "low": 3 };
-      tasks.sort((a, b) => priorityOrder[a.priority.toLowerCase()] - priorityOrder[b.priority.toLowerCase()]);
-      renderTasks();
-  }
+    function deleteTask(index) {
+        tasks.splice(index, 1);
+        renderTasks();
+    }
 
-  function getPriorityColor(priority) {
-      const colors = { "high": "red", "medium": "yellow", "low": "green" };
-      return colors[priority.toLowerCase()] || "black";
-  }
+    function sortTasks() {
+        const priorityOrder = { "high": 1, "medium": 2, "low": 3 };
+        tasks.sort((a, b) => priorityOrder[a.priority.toLowerCase()] - priorityOrder[b.priority.toLowerCase()]);
+        renderTasks();
+    }
 
-  function createButton(text, callback) {
-      const button = document.createElement("button");
-      button.textContent = text;
-      button.addEventListener("click", callback);
-      return button;
-  }
+    function getPriorityColor(priority) {
+        const colors = { "high": "red", "medium": "yellow", "low": "green" };
+        return colors[priority.toLowerCase()] || "black";
+    }
+
+    function createButton(text, callback) {
+        const button = document.createElement("button");
+        button.textContent = text;
+        button.addEventListener("click", callback);
+        return button;
+    }
+
+    
+    function fetchTasks() {
+        fetch("https://jsonplaceholder.typicode.com/todos?_limit=5")
+            .then(response => response.json())
+            .then(data => {
+                tasks = data.map(todo => ({
+                    description: todo.title,
+                    priority: "low", 
+                    user: "User", 
+                    dueDate: "N/A" 
+                }));
+                renderTasks();
+            })
+            .catch(error => console.error("Error fetching tasks:", error));
+    }
+
+    
+    function saveTask(task) {
+        fetch("https://jsonplaceholder.typicode.com/todos", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(task)
+        })
+        .then(response => response.json())
+        .then(savedTask => {
+            tasks.push(savedTask);
+            renderTasks();
+        })
+        .catch(error => console.error("Error saving task:", error));
+    }
 });

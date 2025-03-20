@@ -1,4 +1,6 @@
-{
+{ "engines": {
+  "node": "12.0.0"
+},
   "name": "js-task-lister-lite",
   "version": "1.0.0",
   "description": "One list, many tasks. Create a todo list in vanilla JS",
